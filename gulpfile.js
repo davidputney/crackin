@@ -29,12 +29,13 @@ var sass = require('gulp-ruby-sass');
 var prefix = require('gulp-autoprefixer');
 var minify = require('gulp-minify-css');
 var csslint = require('gulp-csslint');
+var scsslint = require('gulp-scsslint');
 
 // SVGs
 var svgmin = require('gulp-svgmin');
 var svgstore = require('gulp-svgstore');
 var svg2png = require('gulp-svg2png');
-var svgSprite = require("gulp-svg-sprite")
+var svgSprite = require("gulp-svg-sprite");
 
 // Docs
 var fileinclude = require('gulp-file-include');
@@ -44,10 +45,12 @@ var markdown = require('gulp-markdown');
 
 //images
 var imagemin = require('gulp-imagemin');
-var jpegtran = require('gulp-imagemin/node_modules/imagemin/node_modules/imagemin-jpegtran/');
+var jpegtran = require('gulp-imagemin');
 var gm = require('gulp-gm');
 var rimraf = require('gulp-rimraf');
 
+// fonts
+var fonts = require('gulp-css-base64');
 
 /**
  * Paths to project folders
@@ -87,7 +90,6 @@ var paths = {
 		input: 'src/html/*.{html,md,markdown}',
 		watch: 'src/html/**/*.html',
 		output: 'site/',
-		//templates: 'src/html/_templates/',
 		assets: 'src/html/assets/**'
 	},	
 	markdown: {
@@ -98,6 +100,10 @@ var paths = {
 		input: 'src/siteart_input/*{.png,.jpg,.tiff,.jpeg}',
 		output: 'site/siteart/',
 		done: 'src/siteart_ouput/'
+	},	
+	fonts: {
+		input: 'src/static/fonts/*.css',
+		output: 'site/fonts/'
 	}	
 };
 
@@ -109,10 +115,12 @@ gulp.task('build:styles', function() {
  		.pipe(plumber(function () {
             beep();
         }))
+    	.pipe(cache('scsslint'))
+        .pipe(scsslint())
 		.pipe(sass({style: 'expanded', noCache: true, 'sourcemap=none': true}))
 		.pipe(flatten ())
-	//	.pipe(csslint())
-    //	.pipe(csslint.reporter())
+		.pipe(csslint())
+    	.pipe(csslint.reporter())
 		.pipe(prefix('last 2 version', '> 1%'))
 		.pipe(rename({ suffix: '.min' }))
 		.pipe(minify())
@@ -383,6 +391,12 @@ gulp.task('copy:images', function() {
 		.pipe(gulp.dest(paths.images.done));
 });
 
+
+gulp.task('fonts', function () {
+    return gulp.src(paths.fonts.input)
+        .pipe(fonts())
+        .pipe(gulp.dest(paths.fonts.output));
+});
 
 
 // Compile files, generate docs, and run unit tests (default)
